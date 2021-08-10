@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "76408462403",
+    "project_id": "holdem-timer-98e66",
+    "storage_bucket": "holdem-timer-98e66.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:76408462403:android:d9b085b6e3f53614bb88f6",
+        "android_client_info": {
+          "package_name": "com.kyungsnim.holdem_timer"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "76408462403-3lbmtg0laadu6f5d2j2t5tj410lfsio0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.kyungsnim.holdem_timer",
+            "certificate_hash": "c7db24fd69f5efb54f9069c9dae8f41fa7d666c3"
+          }
+        },
+        {
+          "client_id": "76408462403-q2bnklddnm6o3i46reu2b3m2k0mor49h.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDxt__QMVSO4DYTY8OB_Y8jZd47Ws5X04I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "76408462403-q2bnklddnm6o3i46reu2b3m2k0mor49h.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

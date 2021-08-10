@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>76408462403-f8tj5g40gkp0n37900141kov8rm88lpn.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.76408462403-f8tj5g40gkp0n37900141kov8rm88lpn</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>76408462403-3lbmtg0laadu6f5d2j2t5tj410lfsio0.apps.googleusercontent.com</string>
+	<key>API_KEY</key>
+	<string>AIzaSyC2FrwPPbWwleHkyKn8m0JlMSM_DiICEdU</string>
+	<key>GCM_SENDER_ID</key>
+	<string>76408462403</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.kyungsnim.holdemTimer</string>
+	<key>PROJECT_ID</key>
+	<string>holdem-timer-98e66</string>
+	<key>STORAGE_BUCKET</key>
+	<string>holdem-timer-98e66.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:76408462403:ios:411d499529e86f39bb88f6</string>
+</dict>
+</plist>

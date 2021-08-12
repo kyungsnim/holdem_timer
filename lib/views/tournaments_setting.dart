@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:holdem_timer/models/default_tournament.dart';
 
 import '../widgets.dart';
 
@@ -9,6 +10,37 @@ class TournamentsSetting extends StatefulWidget {
 }
 
 class _TournamentsSettingState extends State<TournamentsSetting> {
+  List<DefaultTournament> tournamentList = [];
+  TextEditingController titleController = TextEditingController();
+
+  @override
+  void initState() {
+    titleController.text = 'Default Tourn...';
+
+    super.initState();
+    for(var i = 1; i <= 30; i++){
+      var level = i;
+      var sb = level * 100;
+      var bb = level * 200;
+      var ante = level * 200;
+      var runningTime = 8;
+      var breakTime = 0;
+
+      if( i % 5 == 0) {
+        breakTime = 5;
+      } else if(i == 30) {
+        breakTime = 10;
+      }
+      tournamentList.add(DefaultTournament(
+        level: level,
+        sb: sb,
+        bb: bb,
+        ante: ante,
+        runningTime: runningTime,
+        breakTime: breakTime,
+      ));
+    }
+  }
   @override
   Widget build(BuildContext context) {
     var titleTextSize = MediaQuery.of(context).size.width * 0.06;
@@ -16,6 +48,8 @@ class _TournamentsSettingState extends State<TournamentsSetting> {
     var smallTextSize = MediaQuery.of(context).size.width * 0.02;
     return Scaffold(
         body: Container(
+          height: MediaQuery.of(context).size.height,
+            width: MediaQuery.of(context).size.width,
             color: Colors.black,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -76,7 +110,7 @@ class _TournamentsSettingState extends State<TournamentsSetting> {
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: Colors.white60)),
       height: MediaQuery.of(context).size.height * 0.6,
-      width: MediaQuery.of(context).size.width * 0.49,
+      width: MediaQuery.of(context).size.width * 0.45,
       child: SingleChildScrollView(
           child: Column(
         children: [
@@ -86,7 +120,6 @@ class _TournamentsSettingState extends State<TournamentsSetting> {
                 border: Border.all(
               color: Colors.white10,
             )),
-            height: MediaQuery.of(context).size.height * 0.2,
             child: Row(children: [
               Padding(
                 padding: const EdgeInsets.all(25),
@@ -99,124 +132,14 @@ class _TournamentsSettingState extends State<TournamentsSetting> {
                 ),
               ),
               SizedBox(width: MediaQuery.of(context).size.width * 0.02),
-              smallButton(
-                'DEFAULT TOURN.',
-                smallTextSize,
-                MediaQuery.of(context).size.height * 0.08,
-              ),
-              SizedBox(width: MediaQuery.of(context).size.width * 0.01),
-            ]),
-          ),
-
-          /// Cost, Chips Header
-          Container(
-            alignment: Alignment.bottomCenter,
-            height: MediaQuery.of(context).size.height * 0.2,
-            child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Flexible(
-                    flex: 1,
-                    child: Padding(
-                      padding: const EdgeInsets.all(25),
-                      child: Container(
-                        child: Text('            ',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: mediumTextSize,
-                            )),
-                      ),
-                    ),
-                  ),
-                  Flexible(
-                    flex: 1,
-                    child: Padding(
-                      padding: const EdgeInsets.all(25),
-                      child: Container(
-                        child: Text('Cost',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: mediumTextSize,
-                            )),
-                      ),
-                    ),
-                  ),
-                  Flexible(
-                    flex: 1,
-                    child: Padding(
-                      padding: const EdgeInsets.all(25),
-                      child: Container(
-                        child: Text('Chips',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: mediumTextSize,
-                            )),
-                      ),
-                    ),
-                  ),
-                ]),
-          ),
-
-          /// Buy-In 부분
-          Container(
-            alignment: Alignment.topCenter,
-            height: MediaQuery.of(context).size.height * 0.2,
-            child: Row(children: [
-              Padding(
-                padding: const EdgeInsets.all(25),
-                child: Container(
-                  child: Text('Buy-In',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: mediumTextSize,
-                      )),
-                ),
-              ),
-              Spacer(),
-
-              /// minus button
-              Container(
-                width: MediaQuery.of(context).size.width * 0.04,
-                height: MediaQuery.of(context).size.width * 0.04,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(30),
-                  color: Colors.white10,
-                ),
-                child: Icon(
-                  Icons.exposure_minus_1,
-                  color: Colors.white,
-                  size: mediumTextSize,
-                ),
-              ),
-              SizedBox(width: MediaQuery.of(context).size.width * 0.01),
-
-              /// cost
-              Text('1',
-                  style:
-                      TextStyle(fontSize: mediumTextSize, color: Colors.white)),
-              SizedBox(width: MediaQuery.of(context).size.width * 0.01),
-
-              /// plus button
-              Container(
-                width: MediaQuery.of(context).size.width * 0.04,
-                height: MediaQuery.of(context).size.width * 0.04,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(30),
-                  color: Colors.white10,
-                ),
-                child: Icon(
-                  Icons.plus_one,
-                  color: Colors.white,
-                  size: mediumTextSize,
-                ),
-              ),
-              Spacer(),
-
-              /// chips
+              // TextFormField(
+              //
+              // ),
               Text(
-                '2000',
-                style: TextStyle(fontSize: mediumTextSize, color: Colors.white),
-              ),
+                'DEFAULT TOURN.',
+                style: TextStyle(fontSize: smallTextSize,
+                  color: Colors.white
+              ),),
               SizedBox(width: MediaQuery.of(context).size.width * 0.01),
             ]),
           ),
@@ -298,27 +221,27 @@ class _TournamentsSettingState extends State<TournamentsSetting> {
             onTap: () => Get.back(),
             child: primaryButton(
               'BACK',
-              mediumTextSize,
+              smallTextSize,
               MediaQuery.of(context).size.width * 0.16,
-              MediaQuery.of(context).size.height * 0.2,
+              MediaQuery.of(context).size.height * 0.1,
             ),
           ),
           InkWell(
             onTap: () => Get.back(),
             child: primaryButton(
               'START',
-              mediumTextSize,
+              smallTextSize,
               MediaQuery.of(context).size.width * 0.16,
-              MediaQuery.of(context).size.height * 0.2,
+              MediaQuery.of(context).size.height * 0.1,
             ),
           ),
           InkWell(
             onTap: () => Get.back(),
             child: primaryButton(
               'SAVE',
-              mediumTextSize,
+              smallTextSize,
               MediaQuery.of(context).size.width * 0.16,
-              MediaQuery.of(context).size.height * 0.2,
+              MediaQuery.of(context).size.height * 0.1,
             ),
           ),
         ],
@@ -342,7 +265,7 @@ class _TournamentsSettingState extends State<TournamentsSetting> {
               '-',
               mediumTextSize,
               MediaQuery.of(context).size.width * 0.24,
-              MediaQuery.of(context).size.height * 0.2,
+              MediaQuery.of(context).size.height * 0.1,
             ),
           ),
           InkWell(
@@ -351,7 +274,7 @@ class _TournamentsSettingState extends State<TournamentsSetting> {
               '+',
               mediumTextSize,
               MediaQuery.of(context).size.width * 0.24,
-              MediaQuery.of(context).size.height * 0.2,
+              MediaQuery.of(context).size.height * 0.1,
             ),
           ),
         ],

@@ -43,15 +43,15 @@ Widget plusMinusButton(text, textSize, width, height, plusFunction, minusFunctio
       borderRadius: BorderRadius.circular(100),
       color: Colors.white10,
     ),
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         InkWell(
-          onTap: plusFunction,
+          onTap: minusFunction,
           child: Container(
-            height: textSize * 1.3,
-              width: textSize * 1.3,
-              child: Icon(Icons.add, color: Colors.orangeAccent, size: textSize)
+              height: textSize * 2,
+              width: textSize * 2,
+              child: Icon(Icons.arrow_drop_down, color: Colors.orangeAccent, size: textSize * 2)
           ),
         ),
         Text(text,
@@ -60,11 +60,11 @@ Widget plusMinusButton(text, textSize, width, height, plusFunction, minusFunctio
                 fontWeight: FontWeight.bold,
                 color: Colors.orangeAccent)),
         InkWell(
-          onTap: minusFunction,
+          onTap: plusFunction,
           child: Container(
-              height: textSize * 1.3,
-              width: textSize * 1.3,
-              child: Icon(Icons.remove, color: Colors.orangeAccent, size: textSize)
+              height: textSize * 2,
+              width: textSize * 2,
+              child: Icon(Icons.arrow_drop_up, color: Colors.orangeAccent, size: textSize * 2)
           ),
         ),
       ],

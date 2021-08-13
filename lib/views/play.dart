@@ -1,15 +1,14 @@
-import 'dart:io';
-
 import 'package:audioplayers/audioplayers.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:holdem_timer/models/default_tournament.dart';
 import 'dart:async';
 import '../widgets.dart';
 
 class Play extends StatefulWidget {
-  List<DefaultTournament> tournamentList;
+  String tournamentId;
 
-  Play(this.tournamentList);
+  Play(this.tournamentId);
 
   @override
   _PlayState createState() => _PlayState();
@@ -20,7 +19,7 @@ class _PlayState extends State<Play> {
   AudioCache audioCache = AudioCache();
 
   Timer? _timer; // 타이머
-  var _currentLevel = 1; // 실제 레벨은 1과 맵핑
+  var _currentLevel = 0; // 실제 레벨은 1과 맵핑
   var _totalHours = 0; // TOTAL TIME HOURS
   var _totalMinutes = 0; // TOTAL TIME MINUTES
   var _totalSeconds = 0; // TOTAL TIME SECONDS
@@ -51,13 +50,24 @@ class _PlayState extends State<Play> {
     //   audioPlayer.startHeadlessService();
     // }
 
-    setState(() {
-      tournamentList = widget.tournamentList;
+    FirebaseFirestore.instance.collection('Tournaments').doc(widget.tournamentId).collection('Levels').orderBy('level').get().then((value) {
+      QuerySnapshot ds = value;
 
-      /// level 1
-      currentTournament = tournamentList![_currentLevel];
-      levelSetting();
-      breakTimeSetting();
+      // Map<String, dynamic> roomData = querySnapshot?.docs[index].data() as Map<String, dynamic>;
+      print('ds.size : ${ds.size}');
+      setState(() {
+        tournamentList = List.filled(ds.size, DefaultTournament());
+        for(int i = 0; i < ds.size; i++){
+          Map<String, dynamic> item = ds.docs[i].data() as Map<String, dynamic>;
+          tournamentList![i] = DefaultTournament(level: item['level'], sb: item['sb'], bb: item['bb'],
+              ante: item['ante'], runningTime: item['runningTime'], breakTime: item['breakTime']);
+        }
+
+        /// level 1
+        currentTournament = tournamentList![_currentLevel];
+        levelSetting();
+        breakTimeSetting();
+      });
     });
   }
 
@@ -67,7 +77,7 @@ class _PlayState extends State<Play> {
 
   levelSetting() {
     setState(() {
-
+      currentTournament = tournamentList![_currentLevel];
       _levelMinutes = currentTournament.runningTime!;
       _levelSeconds = 0;
       sb = currentTournament.sb!;
@@ -185,25 +195,6 @@ class _PlayState extends State<Play> {
           _totalHours++;
         }
 
-        /// to break time
-        if (_timeToBreakSeconds == 0 || _timeToBreakSeconds == 60) {
-          if (_timeToBreakMinutes == 0 && _timeToBreakSeconds == 0 && currentTournament.breakTime! > 0){
-            /// 분이 0이고 초도 0인 경우 브레이크 타임
-            // play('timeToBreak');
-            // _breakTime();
-            // print()
-            // breakTimeSetting();
-          }
-          if (_timeToBreakMinutes > 0) {
-            _timeToBreakMinutes--;
-          }
-          _timeToBreakSeconds = 60;
-        }
-        // if(_timeToBreakMinutes > 0 && _timeToBreakSeconds == 60) {
-        //   _timeToBreakMinutes--;
-        // }
-        _timeToBreakSeconds--;
-
         /// level time
         if (_levelSeconds == 0 || _levelSeconds == 60) {
           // _levelSeconds = 60;
@@ -215,16 +206,34 @@ class _PlayState extends State<Play> {
             levelSetting();
             breakTimeSetting();
             _levelMinutes--;
-            play('nextLevel');
+            if (_timeToBreakMinutes != 0 && _timeToBreakSeconds != 0 && currentTournament.breakTime! == 0){
+              /// 브레이크타임이 아닐 때만 NEXT LEVEL 소리 내보내
+              play('nextLevel');
+            }
           }
           _levelSeconds = 60;
         }
 
         _levelSeconds--;
+
+        /// to break time
+        if (_timeToBreakSeconds == 0 || _timeToBreakSeconds == 60) {
+          if (_timeToBreakMinutes == 0 && _timeToBreakSeconds == 0 && currentTournament.breakTime! > 0){
+            /// 분이 0이고 초도 0인 경우 브레이크 타임
+            play('timeToBreak');
+          }
+          if (_timeToBreakMinutes > 0) {
+            _timeToBreakMinutes--;
+          }
+          _timeToBreakSeconds = 60;
+        }
+        _timeToBreakSeconds--;
+
         if (_levelMinutes == 0 && _levelSeconds <= 5 && _levelSeconds > 0) {
           /// 5초 남을 때부터 음성 표시하기
           play(_levelSeconds);
         }
+
       });
     });
   }

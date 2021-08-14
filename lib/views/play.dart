@@ -1,7 +1,9 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:holdem_timer/globals.dart';
 import 'package:holdem_timer/models/default_tournament.dart';
+import 'package:intl/intl.dart';
 import 'dart:async';
 import '../widgets.dart';
 
@@ -36,6 +38,7 @@ class _PlayState extends State<Play> {
   var nextSb = 0;
   var nextBb = 0;
   var nextAnte = 0;
+  var maxLevel = 0;
   List<DefaultTournament>? tournamentList;
   late DefaultTournament currentTournament;
 
@@ -50,17 +53,29 @@ class _PlayState extends State<Play> {
     //   audioPlayer.startHeadlessService();
     // }
 
-    FirebaseFirestore.instance.collection('Tournaments').doc(widget.tournamentId).collection('Levels').orderBy('level').get().then((value) {
+    FirebaseFirestore.instance
+        .collection('Tournaments')
+        .doc(widget.tournamentId)
+        .collection('Levels')
+        .orderBy('level')
+        .get()
+        .then((value) {
       QuerySnapshot ds = value;
 
       // Map<String, dynamic> roomData = querySnapshot?.docs[index].data() as Map<String, dynamic>;
       print('ds.size : ${ds.size}');
       setState(() {
         tournamentList = List.filled(ds.size, DefaultTournament());
-        for(int i = 0; i < ds.size; i++){
+        maxLevel = ds.size;
+        for (int i = 0; i < ds.size; i++) {
           Map<String, dynamic> item = ds.docs[i].data() as Map<String, dynamic>;
-          tournamentList![i] = DefaultTournament(level: item['level'], sb: item['sb'], bb: item['bb'],
-              ante: item['ante'], runningTime: item['runningTime'], breakTime: item['breakTime']);
+          tournamentList![i] = DefaultTournament(
+              level: item['level'],
+              sb: item['sb'],
+              bb: item['bb'],
+              ante: item['ante'],
+              runningTime: item['runningTime'],
+              breakTime: item['breakTime']);
         }
 
         /// level 1
@@ -83,9 +98,15 @@ class _PlayState extends State<Play> {
       sb = currentTournament.sb!;
       bb = currentTournament.bb!;
       ante = currentTournament.ante!;
-      nextSb = tournamentList![_currentLevel + 1].sb!;
-      nextBb = tournamentList![_currentLevel + 1].bb!;
-      nextAnte = tournamentList![_currentLevel + 1].ante!;
+      if(_currentLevel ==  maxLevel - 1) {
+        nextSb = 0;
+        nextBb = 0;
+        nextAnte = 0;
+      } else {
+        nextSb = tournamentList![_currentLevel + 1].sb!;
+        nextBb = tournamentList![_currentLevel + 1].bb!;
+        nextAnte = tournamentList![_currentLevel + 1].ante!;
+      }
       // _levelMinutes = currentTournament.runningTime!;
       // breakTimeSetting();
     });
@@ -100,13 +121,13 @@ class _PlayState extends State<Play> {
     _timeToBreakMinutes += _levelMinutes;
     while (true) {
       /// 만일 현재 레벨에 브레이크타임이 있는 경우
-      if(tournamentList![forCalcBreakTimeLevel].breakTime! > 0) {
+      if (tournamentList![forCalcBreakTimeLevel].breakTime! > 0) {
         print('this');
         break;
       } else {
         /// 브레이크타임이 있는 레벨까지 계속 더해주기
         _timeToBreakMinutes +=
-        tournamentList![forCalcBreakTimeLevel].runningTime!;
+            tournamentList![forCalcBreakTimeLevel].runningTime!;
 
         /// 만약 브레이크타임이 있는 레벨인 경우 누적합 그만하기
         if (tournamentList![++forCalcBreakTimeLevel].breakTime! > 0) {
@@ -128,27 +149,40 @@ class _PlayState extends State<Play> {
     return Scaffold(
         resizeToAvoidBottomInset: false,
         body: Stack(children: [
-          /// 배경
           Container(
+            height: MediaQuery.of(context).size.height,
+            width: MediaQuery.of(context).size.width,
             color: Colors.black,
-            height: MediaQuery
-                .of(context)
-                .size
-                .height,
-            width: MediaQuery
-                .of(context)
-                .size
-                .width,
-            // child: Image(
-            //   image: AssetImage('assets/images/background.png'),
-            // ),
+          ),
+          /// 배경
+          Center(
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.5,
+              width: MediaQuery.of(context).size.width * 0.5,
+              child: Image(
+                image: AssetImage('assets/images/logo.png'),
+              ),
+            ),
+          ),
+          Positioned(
+            top: MediaQuery.of(context).size.width * 0.01,
+            left: MediaQuery.of(context).size.width * 0.01,
+            child: Image(
+              image: AssetImage('assets/images/thunder.png'),
+            ),
+          ),
+          Positioned(
+            bottom: MediaQuery.of(context).size.width * 0.01,
+            right: MediaQuery.of(context).size.width * 0.01,
+            child: Image(
+              image: AssetImage('assets/images/thunder.png'),
+            ),
           ),
           Container(
               color: Colors.black.withOpacity(0.6),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-
                   /// title
                   titleText(context),
 
@@ -201,14 +235,20 @@ class _PlayState extends State<Play> {
           if (_levelMinutes > 0) {
             _levelMinutes--;
           } else {
-            /// 분이 0이고 초도 0인 경우 다음 레벨로 변경
-            _currentLevel++;
-            levelSetting();
-            breakTimeSetting();
-            _levelMinutes--;
-            if (_timeToBreakMinutes != 0 && _timeToBreakSeconds != 0 && currentTournament.breakTime! == 0){
-              /// 브레이크타임이 아닐 때만 NEXT LEVEL 소리 내보내
-              play('nextLevel');
+            if(_currentLevel < maxLevel-1) {
+              /// 분이 0이고 초도 0인 경우 다음 레벨로 변경
+              _currentLevel++;
+              levelSetting();
+              breakTimeSetting();
+              _levelMinutes--;
+              if (_timeToBreakMinutes != 0 &&
+                  _timeToBreakSeconds != 0 &&
+                  currentTournament.breakTime! == 0) {
+                /// 브레이크타임이 아닐 때만 NEXT LEVEL 소리 내보내
+                play('nextLevel');
+              }
+            } else {
+              _click();
             }
           }
           _levelSeconds = 60;
@@ -218,7 +258,9 @@ class _PlayState extends State<Play> {
 
         /// to break time
         if (_timeToBreakSeconds == 0 || _timeToBreakSeconds == 60) {
-          if (_timeToBreakMinutes == 0 && _timeToBreakSeconds == 0 && currentTournament.breakTime! > 0){
+          if (_timeToBreakMinutes == 0 &&
+              _timeToBreakSeconds == 0 &&
+              currentTournament.breakTime! > 0) {
             /// 분이 0이고 초도 0인 경우 브레이크 타임
             play('timeToBreak');
           }
@@ -233,7 +275,6 @@ class _PlayState extends State<Play> {
           /// 5초 남을 때부터 음성 표시하기
           play(_levelSeconds);
         }
-
       });
     });
   }
@@ -259,7 +300,7 @@ class _PlayState extends State<Play> {
       _totalSeconds = 0;
 
       /// 레벨 1 상태로 초기화
-      _currentLevel = 1;
+      _currentLevel = 0;
       currentTournament = tournamentList![_currentLevel];
       levelSetting();
       breakTimeSetting();
@@ -267,105 +308,104 @@ class _PlayState extends State<Play> {
   }
 
   titleText(context) {
-    var titleTextSize = MediaQuery
-        .of(context)
-        .size
-        .width * 0.06;
-    var mediumTextSize = MediaQuery
-        .of(context)
-        .size
-        .width * 0.035;
-    var smallTextSize = MediaQuery
-        .of(context)
-        .size
-        .width * 0.02;
-    var sec = _totalSeconds; // 초
+    var titleTextSize = MediaQuery.of(context).size.width * 0.06;
+    var mediumTextSize = MediaQuery.of(context).size.width * 0.035;
 
     return Container(
-      height: MediaQuery
-          .of(context)
-          .size
-          .height * 0.20,
+      height: MediaQuery.of(context).size.height * 0.20,
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text('TOTAL TIME',
-                    style: TextStyle(
-                        color: Colors.white, fontSize: mediumTextSize)),
-                Row(
-                  children: [
-                    Text(_totalHours < 10 ? '0$_totalHours' : '$_totalHours',
-                        style: TextStyle(
-                            color: Colors.white, fontSize: mediumTextSize)),
-                    Text(':',
-                        style: TextStyle(
-                            color: Colors.white, fontSize: mediumTextSize)),
-                    Text(
-                        _totalMinutes < 10
-                            ? '0$_totalMinutes'
-                            : '$_totalMinutes',
-                        style: TextStyle(
-                            color: Colors.white, fontSize: mediumTextSize)),
-                    Text(':',
-                        style: TextStyle(
-                            color: Colors.white, fontSize: mediumTextSize)),
-                    Text(
-                        _totalSeconds < 10
-                            ? '0$_totalSeconds'
-                            : '$_totalSeconds',
-                        // _seconds < 10 ? _minutes < 10 ? _hours < 10 ? '0$_hours:0$_minutes:0$_seconds' : '$_hours:0$_minutes:0$_seconds' : '$_hours:$_minutes:0$_seconds' : '$_hours:$_minutes:$_seconds'
-                        style: TextStyle(
-                            color: Colors.white, fontSize: mediumTextSize))
-                  ],
-                )
-              ],
+            Container(
+              width: MediaQuery.of(context).size.width * 0.32,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text('TOTAL TIME',
+                      style: TextStyle(
+                          color: Colors.white, fontSize: mediumTextSize)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(_totalHours < 10 ? '0$_totalHours' : '$_totalHours',
+                          style: TextStyle(
+                              color: Colors.white, fontSize: mediumTextSize)),
+                      Text(':',
+                          style: TextStyle(
+                              color: Colors.white, fontSize: mediumTextSize)),
+                      Text(
+                          _totalMinutes < 10
+                              ? '0$_totalMinutes'
+                              : '$_totalMinutes',
+                          style: TextStyle(
+                              color: Colors.white, fontSize: mediumTextSize)),
+                      Text(':',
+                          style: TextStyle(
+                              color: Colors.white, fontSize: mediumTextSize)),
+                      Text(
+                          _totalSeconds < 10
+                              ? '0$_totalSeconds'
+                              : '$_totalSeconds',
+                          // _seconds < 10 ? _minutes < 10 ? _hours < 10 ? '0$_hours:0$_minutes:0$_seconds' : '$_hours:0$_minutes:0$_seconds' : '$_hours:$_minutes:0$_seconds' : '$_hours:$_minutes:$_seconds'
+                          style: TextStyle(
+                              color: Colors.white, fontSize: mediumTextSize))
+                    ],
+                  )
+                ],
+              ),
             ),
-            Spacer(),
-            Text('PLAY GAME',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: titleTextSize,
-                    color: Colors.black)),
-            Spacer(),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text('TIME TO BREAK',
-                    style: TextStyle(
-                        color: Colors.white, fontSize: mediumTextSize)),
-                Row(
-                  children: [
-                    Text(_timeToBreakHours < 10
-                        ? '0$_timeToBreakHours'
-                        : '$_timeToBreakHours',
-                        style: TextStyle(
-                            color: Colors.white, fontSize: mediumTextSize)),
-                    Text(':',
-                        style: TextStyle(
-                            color: Colors.white, fontSize: mediumTextSize)),
-                    Text(_timeToBreakMinutes < 10
-                        ? '0$_timeToBreakMinutes'
-                        : '$_timeToBreakMinutes',
-                        style: TextStyle(
-                            color: Colors.white, fontSize: mediumTextSize)),
-                    Text(':',
-                        style: TextStyle(
-                            color: Colors.white, fontSize: mediumTextSize)),
-                    Text(_timeToBreakSeconds < 10
-                        ? '0$_timeToBreakSeconds'
-                        : '$_timeToBreakSeconds',
-                        style: TextStyle(
-                            color: Colors.white, fontSize: mediumTextSize))
-                  ],
-                )
-              ],
+            Container(
+              width: MediaQuery.of(context).size.width * 0.32,
+              child: Text('Show Down',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: titleTextSize,
+                      color: mainColor)),
+            ),
+            Container(
+              width: MediaQuery.of(context).size.width * 0.32,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text('TIME TO BREAK',
+                      style: TextStyle(
+                          color: Colors.white, fontSize: mediumTextSize)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                          _timeToBreakHours < 10
+                              ? '0$_timeToBreakHours'
+                              : '$_timeToBreakHours',
+                          style: TextStyle(
+                              color: Colors.white, fontSize: mediumTextSize)),
+                      Text(':',
+                          style: TextStyle(
+                              color: Colors.white, fontSize: mediumTextSize)),
+                      Text(
+                          _timeToBreakMinutes < 10
+                              ? '0$_timeToBreakMinutes'
+                              : '$_timeToBreakMinutes',
+                          style: TextStyle(
+                              color: Colors.white, fontSize: mediumTextSize)),
+                      Text(':',
+                          style: TextStyle(
+                              color: Colors.white, fontSize: mediumTextSize)),
+                      Text(
+                          _timeToBreakSeconds < 10
+                              ? '0$_timeToBreakSeconds'
+                              : '$_timeToBreakSeconds',
+                          style: TextStyle(
+                              color: Colors.white, fontSize: mediumTextSize))
+                    ],
+                  )
+                ],
+              ),
             ),
           ],
         ),
@@ -374,224 +414,189 @@ class _PlayState extends State<Play> {
   }
 
   mediumBox(context) {
-    var bigTitleTextSize = MediaQuery
-        .of(context)
-        .size
-        .width * 0.15;
-    var titleTextSize = MediaQuery
-        .of(context)
-        .size
-        .width * 0.05;
-    var tmTextSize = MediaQuery
-        .of(context)
-        .size
-        .width * 0.043;
-    var mediumTextSize = MediaQuery
-        .of(context)
-        .size
-        .width * 0.035;
-    var msTextSize = MediaQuery.of(context).size.width * 0.027;
-    var smallTextSize = MediaQuery
-        .of(context)
-        .size
-        .width * 0.02;
+    var bigTitleTextSize = MediaQuery.of(context).size.width * 0.15;
+    var titleTextSize = MediaQuery.of(context).size.width * 0.05;
+    var tmTextSize = MediaQuery.of(context).size.width * 0.043;
+    var mediumTextSize = MediaQuery.of(context).size.width * 0.035;
+    var f = NumberFormat('###,###,###,###');
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.black.withOpacity(0.4),
       ),
-      height: MediaQuery
-          .of(context)
-          .size
-          .height * 0.7,
+      height: MediaQuery.of(context).size.height * 0.7,
       child: SingleChildScrollView(
           child: Column(
-            children: [
+        children: [
+          Container(
+            width: MediaQuery.of(context).size.width,
+            child: Row(children: [
+              /// 좌측 박스
               Container(
-                width: MediaQuery
-                    .of(context)
-                    .size
-                    .width,
-                child: Row(children: [
+                width: MediaQuery.of(context).size.width * 0.6,
+                child: Column(
+                  children: [
+                    Text('LEVEL ${_currentLevel + 1}',
+                        style: TextStyle(
+                            color: Colors.white, fontSize: titleTextSize)),
+                    Container(
+                        width: MediaQuery.of(context).size.width * 0.6,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              _levelMinutes < 10
+                                  ? '0$_levelMinutes'
+                                  : '$_levelMinutes',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: bigTitleTextSize),
+                              textAlign: TextAlign.center,
+                            ),
+                            Text(
+                              ':',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: bigTitleTextSize),
+                              textAlign: TextAlign.center,
+                            ),
+                            Text(
+                              _levelSeconds < 10
+                                  ? '0$_levelSeconds'
+                                  : '$_levelSeconds',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: bigTitleTextSize),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        )),
+                    RichText(
+                      text: TextSpan(
+                          style: TextStyle(fontSize: titleTextSize),
+                          children: [
+                            TextSpan(
+                                text: 'SB ',
+                                style: TextStyle(color: Colors.grey)),
+                            TextSpan(
+                                text: f.format(sb).toString(),
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold)),
+                          ]),
+                    ),
+                    RichText(
+                      text: TextSpan(
+                          style: TextStyle(fontSize: titleTextSize),
+                          children: [
+                            TextSpan(
+                                text: 'BB ',
+                                style: TextStyle(color: Colors.grey)),
+                            TextSpan(
+                                text: f.format(bb).toString(),
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold)),
+                          ]),
+                    ),
+                    RichText(
+                      text: TextSpan(
+                          style: TextStyle(fontSize: titleTextSize),
+                          children: [
+                            TextSpan(
+                                text: 'ANTE ',
+                                style: TextStyle(color: Colors.grey)),
+                            TextSpan(
+                                text: f.format(ante).toString(),
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold)),
+                          ]),
+                    ),
+                  ],
+                ),
+              ),
 
-                  /// 좌측 박스
-                  Container(
-                    width: MediaQuery
-                        .of(context)
-                        .size
-                        .width * 0.6,
-                    child: Column(
-                      children: [
-                        Text('LEVEL $_currentLevel',
-                            style: TextStyle(
-                                color: Colors.white, fontSize: titleTextSize)),
-                        Container(
-                            width: MediaQuery
-                                .of(context)
-                                .size
-                                .width * 0.6,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  _levelMinutes < 10
-                                      ? '0$_levelMinutes'
-                                      : '$_levelMinutes',
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: bigTitleTextSize),
-                                  textAlign: TextAlign.center,
-                                ),
-                                Text(
-                                  ':',
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: bigTitleTextSize),
-                                  textAlign: TextAlign.center,
-                                ),
-                                Text(
-                                  _levelSeconds < 10
-                                      ? '0$_levelSeconds'
-                                      : '$_levelSeconds',
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: bigTitleTextSize),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            )
-                        ),
-                        RichText(
-                          text: TextSpan(
-                              style: TextStyle(fontSize: titleTextSize),
-                              children: [
-                                TextSpan(
-                                    text: 'SB ',
-                                    style: TextStyle(color: Colors.grey)),
-                                TextSpan(
-                                    text: sb.toString(),
-                                    style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold)),
-                                TextSpan(
-                                    text: ' / ',
-                                    style: TextStyle(color: Colors.grey)),
-                                TextSpan(
-                                    text: bb.toString(),
-                                    style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold)),
-                                TextSpan(
-                                    text: ' BB',
-                                    style: TextStyle(color: Colors.grey)),
-                              ]),
-                        ),
-                        RichText(
-                          text: TextSpan(
-                              style: TextStyle(fontSize: titleTextSize),
-                              children: [
-                                TextSpan(
-                                    text: 'ANTE ',
-                                    style: TextStyle(color: Colors.grey)),
-                                TextSpan(
-                                    text: ante.toString(),
-                                    style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold)),
-                              ]),
-                        ),
-                      ],
+              /// 우측 박스
+              Container(
+                width: MediaQuery.of(context).size.width * 0.35,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('NEXT BLIND',
+                        style: TextStyle(
+                            color: Colors.white, fontSize: mediumTextSize)),
+                    RichText(
+                      text: TextSpan(
+                          style: TextStyle(fontSize: tmTextSize),
+                          children: [
+                            TextSpan(
+                                text: 'SB ',
+                                style: TextStyle(color: Colors.grey)),
+                            TextSpan(
+                                text: f.format(nextSb).toString(),
+                                style: TextStyle(color: Colors.white)),
+                          ]),
                     ),
-                  ),
-                  /// 우측 박스
-                  Container(
-                    width: MediaQuery
-                        .of(context)
-                        .size
-                        .width * 0.35,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('NEXT BLIND',
-                            style: TextStyle(
-                                color: Colors.white, fontSize: mediumTextSize)),
-                        RichText(
-                          text: TextSpan(
-                              style: TextStyle(fontSize: tmTextSize),
-                              children: [
-                                TextSpan(
-                                    text: 'SB ',
-                                    style: TextStyle(color: Colors.grey)),
-                                TextSpan(
-                                    text: nextSb.toString(),
-                                    style: TextStyle(color: Colors.white)),
-                                TextSpan(
-                                    text: ' / ',
-                                    style: TextStyle(color: Colors.grey)),
-                                TextSpan(
-                                    text: nextBb.toString(),
-                                    style: TextStyle(color: Colors.white)),
-                                TextSpan(
-                                    text: ' BB',
-                                    style: TextStyle(color: Colors.grey)),
-                              ]),
-                        ),
-                        SizedBox(height: 20),
-                        Text('NEXT ANTE',
-                            style: TextStyle(
-                                color: Colors.white, fontSize: mediumTextSize)),
-                        RichText(
-                          text: TextSpan(
-                              style: TextStyle(fontSize: tmTextSize),
-                              children: [
-                                TextSpan(
-                                    text: nextAnte.toString(),
-                                    style: TextStyle(color: Colors.white)),
-                              ]),
-                        ),
-                        // SizedBox(height: 20),
-                        // Text('MEMO',
-                        //     style: TextStyle(
-                        //         color: Colors.white, fontSize: smallTextSize)),
-                        // Container(
-                        //     decoration: BoxDecoration(
-                        //       border: Border.all(color: Colors.grey),
-                        //         color: Colors.black.withOpacity(0.2),
-                        // ),
-                        //     child: TextFormField(
-                        //       decoration: InputDecoration(
-                        //         border: InputBorder.none
-                        //       ),
-                        //       maxLines: 5,
-                        //       keyboardType: TextInputType.multiline,
-                        //       style: TextStyle(fontSize: smallTextSize, color: Colors.white),
-                        //     ))
-                      ],
+                    RichText(
+                      text: TextSpan(
+                          style: TextStyle(fontSize: tmTextSize),
+                          children: [
+                            TextSpan(
+                                text: 'BB ',
+                                style: TextStyle(color: Colors.grey)),
+                            TextSpan(
+                                text: f.format(nextBb).toString(),
+                                style: TextStyle(color: Colors.white)),
+                          ]),
                     ),
-                  ),
-                ]),
-              )
-            ],
-          )),
+                    SizedBox(height: 20),
+                    Text('NEXT ANTE',
+                        style: TextStyle(
+                            color: Colors.white, fontSize: mediumTextSize)),
+                    RichText(
+                      text: TextSpan(
+                          style: TextStyle(fontSize: tmTextSize),
+                          children: [
+                            TextSpan(
+                                text: f.format(nextAnte).toString(),
+                                style: TextStyle(color: Colors.white)),
+                          ]),
+                    ),
+                    // SizedBox(height: 20),
+                    // Text('MEMO',
+                    //     style: TextStyle(
+                    //         color: Colors.white, fontSize: smallTextSize)),
+                    // Container(
+                    //     decoration: BoxDecoration(
+                    //       border: Border.all(color: Colors.grey),
+                    //         color: Colors.black.withOpacity(0.2),
+                    // ),
+                    //     child: TextFormField(
+                    //       decoration: InputDecoration(
+                    //         border: InputBorder.none
+                    //       ),
+                    //       maxLines: 5,
+                    //       keyboardType: TextInputType.multiline,
+                    //       style: TextStyle(fontSize: smallTextSize, color: Colors.white),
+                    //     ))
+                  ],
+                ),
+              ),
+            ]),
+          )
+        ],
+      )),
     );
   }
 
   extraSettingBox(title, count, minusFunction, plusFunction) {
-    var titleTextSize = MediaQuery
-        .of(context)
-        .size
-        .width * 0.06;
-    var mediumTextSize = MediaQuery
-        .of(context)
-        .size
-        .width * 0.035;
-    var smallTextSize = MediaQuery
-        .of(context)
-        .size
-        .width * 0.02;
+    var mediumTextSize = MediaQuery.of(context).size.width * 0.035;
+    var smallTextSize = MediaQuery.of(context).size.width * 0.02;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -627,7 +632,7 @@ class _PlayState extends State<Play> {
                 width: mediumTextSize * 2,
                 padding: const EdgeInsets.all(8.0),
                 decoration:
-                BoxDecoration(border: Border.all(color: Colors.grey)),
+                    BoxDecoration(border: Border.all(color: Colors.grey)),
                 child: Text(
                   count,
                   style: TextStyle(
@@ -660,19 +665,9 @@ class _PlayState extends State<Play> {
   }
 
   bottomButtons(context) {
-    var mediumTextSize = MediaQuery
-        .of(context)
-        .size
-        .width * 0.035;
-    var smallTextSize = MediaQuery
-        .of(context)
-        .size
-        .width * 0.02;
+    var smallTextSize = MediaQuery.of(context).size.width * 0.02;
     return Container(
-      height: MediaQuery
-          .of(context)
-          .size
-          .height * 0.1,
+      height: MediaQuery.of(context).size.height * 0.1,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -681,14 +676,8 @@ class _PlayState extends State<Play> {
             child: primaryButton(
               startOrPause,
               smallTextSize,
-              MediaQuery
-                  .of(context)
-                  .size
-                  .width * 0.19,
-              MediaQuery
-                  .of(context)
-                  .size
-                  .height * 0.2,
+              MediaQuery.of(context).size.width * 0.19,
+              MediaQuery.of(context).size.height * 0.2,
             ),
           ),
           InkWell(
@@ -696,27 +685,15 @@ class _PlayState extends State<Play> {
             child: primaryButton(
               'RESET',
               smallTextSize,
-              MediaQuery
-                  .of(context)
-                  .size
-                  .width * 0.19,
-              MediaQuery
-                  .of(context)
-                  .size
-                  .height * 0.2,
+              MediaQuery.of(context).size.width * 0.19,
+              MediaQuery.of(context).size.height * 0.2,
             ),
           ),
           plusMinusButton(
               'TIME',
               smallTextSize,
-              MediaQuery
-                  .of(context)
-                  .size
-                  .width * 0.19,
-              MediaQuery
-                  .of(context)
-                  .size
-                  .height * 0.2,
+              MediaQuery.of(context).size.width * 0.19,
+              MediaQuery.of(context).size.height * 0.2,
               // plus Function
               timePlus,
               // minus Function
@@ -724,14 +701,8 @@ class _PlayState extends State<Play> {
           plusMinusButton(
             'LEVEL',
             smallTextSize,
-            MediaQuery
-                .of(context)
-                .size
-                .width * 0.19,
-            MediaQuery
-                .of(context)
-                .size
-                .height * 0.2,
+            MediaQuery.of(context).size.width * 0.19,
+            MediaQuery.of(context).size.height * 0.2,
             levelPlus,
             levelMinus,
           ),
@@ -740,14 +711,8 @@ class _PlayState extends State<Play> {
             child: primaryButton(
               'SETTING',
               smallTextSize,
-              MediaQuery
-                  .of(context)
-                  .size
-                  .width * 0.19,
-              MediaQuery
-                  .of(context)
-                  .size
-                  .height * 0.2,
+              MediaQuery.of(context).size.width * 0.19,
+              MediaQuery.of(context).size.height * 0.2,
             ),
           ),
         ],
@@ -767,7 +732,7 @@ class _PlayState extends State<Play> {
     setState(() {
       if (_levelMinutes > 0) {
         _levelMinutes--;
-        if(_timeToBreakMinutes > 0) {
+        if (_timeToBreakMinutes > 0) {
           _timeToBreakMinutes--;
           // breakTimeSetting();
         }
@@ -777,12 +742,14 @@ class _PlayState extends State<Play> {
 
   levelPlus() {
     setState(() {
-      _currentLevel++;
-
       /// level +
-      currentTournament = tournamentList![_currentLevel];
-      levelSetting();
-      breakTimeSetting();
+      if(_currentLevel < maxLevel-1) {
+        _currentLevel++;
+
+        currentTournament = tournamentList![_currentLevel];
+        levelSetting();
+        breakTimeSetting();
+      }
     });
   }
 

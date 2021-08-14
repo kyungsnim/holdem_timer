@@ -2,11 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:holdem_timer/models/default_tournament.dart';
 import 'package:holdem_timer/views/play.dart';
-import 'package:holdem_timer/views/tournaments_setting.dart';
 
+import '../globals.dart';
 import '../widgets.dart';
+import 'input_new_tournament.dart';
 
 class Home extends StatefulWidget {
   @override
@@ -17,10 +17,13 @@ class _HomeState extends State<Home> {
   List<String> tournamentList = [];
 
   @override
-  Widget build(BuildContext context) {
+  void initState() {
+    super.initState();
     loadOrSaveData();
+  }
 
-    int i = -1;
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
         resizeToAvoidBottomInset: false,
         body: Container(
@@ -41,8 +44,6 @@ class _HomeState extends State<Home> {
   }
 
   loadOrSaveData() async {
-    var tournamentId = 'Default Tourn.1';
-
     FirebaseFirestore.instance
         .collection('Tournaments')
         .get()
@@ -52,11 +53,13 @@ class _HomeState extends State<Home> {
       // Map<String, dynamic> roomData = querySnapshot?.docs[index].data() as Map<String, dynamic>;
       print('ds.size : ${ds.size}');
 
-      for (int i = 0; i < ds.size; i++) {
-        Map<String, dynamic> item = ds.docs[i].data() as Map<String, dynamic>;
-        print('item[\'title\'] : ${item['title']}');
-        tournamentList.add(item['title']);
-      }
+      setState(() {
+        for (int i = 0; i < ds.size; i++) {
+          Map<String, dynamic> item = ds.docs[i].data() as Map<String, dynamic>;
+          print('item[\'title\'] : ${item['title']}');
+          tournamentList.add(item['title']);
+        }
+      });
     });
 
     /// Find my save Tournament datas
@@ -93,40 +96,35 @@ class _HomeState extends State<Home> {
   titleText(context) {
     var titleTextSize = MediaQuery.of(context).size.width * 0.06;
     var mediumTextSize = MediaQuery.of(context).size.width * 0.035;
-    var smallTextSize = MediaQuery.of(context).size.width * 0.02;
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.15,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.notifications_active,
-            color: Colors.orange,
-            size: titleTextSize,
-          ),
+          Container(
+              width: titleTextSize * 1.5,
+              height: titleTextSize * 1.5,
+              child: Image(
+                image: AssetImage('assets/images/logo.png'),
+              )),
           SizedBox(
-            width: titleTextSize,
+            width: mediumTextSize,
           ),
           Text('T O U R N A M E N T S',
               style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: titleTextSize,
-                  color: Colors.orange))
+                  color: mainColor))
         ],
       ),
     );
   }
 
   tournamentBox(context) {
-    var titleTextSize = MediaQuery.of(context).size.width * 0.06;
     var mediumTextSize = MediaQuery.of(context).size.width * 0.035;
     var smallTextSize = MediaQuery.of(context).size.width * 0.02;
-    print(tournamentList.length);
-    for(int i = 0; i < tournamentList.length; i++){
-      print('tournamentList[i] : ${tournamentList[i]}');
-    }
-    if(tournamentList.length == 0) return Center(child: Container(child: CircularProgressIndicator()));
+    // if(tournamentList.length == 0) return Center(child: Container(child: CircularProgressIndicator()));
     return Container(
       decoration: BoxDecoration(
           color: Colors.white10,
@@ -140,8 +138,8 @@ class _HomeState extends State<Home> {
           return Container(
             decoration: BoxDecoration(
                 border: Border.all(
-                  color: Colors.white10,
-                )),
+              color: Colors.white10,
+            )),
             child: Row(children: [
               Flexible(
                 flex: 2,
@@ -165,16 +163,21 @@ class _HomeState extends State<Home> {
                     MediaQuery.of(context).size.height * 0.08,
                   )),
               SizedBox(width: 5),
-              smallButton(
-                'COPY',
-                smallTextSize,
-                MediaQuery.of(context).size.height * 0.08,
-              ),
-              SizedBox(width: 5),
-              smallButton(
-                'DELETE',
-                smallTextSize,
-                MediaQuery.of(context).size.height * 0.08,
+              // smallButton(
+              //   'COPY',
+              //   smallTextSize,
+              //   MediaQuery.of(context).size.height * 0.08,
+              // ),
+              // SizedBox(width: 5),
+              InkWell(
+                onTap: () {
+                  onPressDelete(tournamentList[index]);
+                },
+                child: smallButton(
+                  'DELETE',
+                  smallTextSize,
+                  MediaQuery.of(context).size.height * 0.08,
+                ),
               ),
             ]),
           );
@@ -184,8 +187,6 @@ class _HomeState extends State<Home> {
   }
 
   bottomButtons(context) {
-    var titleTextSize = MediaQuery.of(context).size.width * 0.06;
-    var mediumTextSize = MediaQuery.of(context).size.width * 0.035;
     var smallTextSize = MediaQuery.of(context).size.width * 0.02;
     return Container(
       height: MediaQuery.of(context).size.height * 0.2,
@@ -202,7 +203,7 @@ class _HomeState extends State<Home> {
             ),
           ),
           InkWell(
-            onTap: () => Get.to(() => TournamentsSetting()),
+            onTap: () => Get.to(() => InputNewTournament()), //TournamentsSetting()),
             child: primaryButton(
               'NEW TOURNAMENT',
               smallTextSize,
@@ -217,15 +218,17 @@ class _HomeState extends State<Home> {
 
   // back 버튼 클릭시 종료할건지 물어보는
   Future<bool?> onPressExit(context) {
+    var smallTextSize = MediaQuery.of(context).size.width * 0.02;
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text("Would you like to exit?", style: TextStyle(fontSize: 18)),
+        backgroundColor: Colors.black,
+        title: Text("앱을 종료하시겠습니까?", style: TextStyle(fontSize: smallTextSize, color: mainColor)),
         actions: <Widget>[
           TextButton(
             child: Text(
-              "Yes",
-              style: TextStyle(fontSize: 15, color: Colors.blue),
+              "예",
+              style: TextStyle(fontSize: smallTextSize, color: mainColor),
             ),
             onPressed: () {
               SystemNavigator.pop();
@@ -233,8 +236,64 @@ class _HomeState extends State<Home> {
           ),
           TextButton(
             child: Text(
-              "No",
-              style: TextStyle(fontSize: 15, color: Colors.grey),
+              "아니오",
+              style: TextStyle(fontSize: smallTextSize, color: Colors.grey),
+            ),
+            onPressed: () => Navigator.pop(context, false),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool?> onPressDelete(tournamentId) async {
+    var smallTextSize = MediaQuery.of(context).size.width * 0.02;
+
+    return showDialog(
+      // barrierColor: Colors.black,
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.black,
+        title: Text("삭제하시겠습니까?", style: TextStyle(fontSize: smallTextSize, color: mainColor)),
+        actions: <Widget>[
+          TextButton(
+            child: Text(
+              "예",
+              style: TextStyle(fontSize: smallTextSize, color: mainColor),
+            ),
+            onPressed: () async {
+              // await
+              FirebaseFirestore.instance
+                  .collection('Tournaments')
+                  .doc(tournamentId)
+                  .collection('Levels')
+                  .get()
+                  .then((snapshot) {
+                for (DocumentSnapshot ds in snapshot.docs) {
+                  ds.reference.delete();
+                }
+              }).then((_) async {
+                FirebaseFirestore.instance
+                    .collection('Tournaments')
+                    .doc(tournamentId)
+                    .delete()
+                    .then((_) {
+                  setState(() {
+                    tournamentList = [];
+                  });
+
+                  /// 데이터 다시 조회
+                  loadOrSaveData();
+                });
+              });
+
+              Navigator.pop(context, false);
+            },
+          ),
+          TextButton(
+            child: Text(
+              "아니오",
+              style: TextStyle(fontSize: smallTextSize, color: Colors.grey),
             ),
             onPressed: () => Navigator.pop(context, false),
           ),

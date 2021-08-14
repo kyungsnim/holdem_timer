@@ -25,10 +25,12 @@ dependencies:
     sdk: flutter
 
   get: ^4.3.5
-  firebase_core:
-  firebase_auth:
+  firebase_core: ^1.4.0
+  firebase_auth: ^3.0.1
   cloud_firestore: ^2.4.0
   audioplayers: ^0.19.1
+  flutter_launcher_icons: ^0.9.1
+  intl: ^0.17.0
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.2
@@ -51,6 +53,8 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/images/background.png
+    - assets/images/logo.png
+    - assets/images/thunder.png
     - assets/audios/5.mp3
     - assets/audios/4.mp3
     - assets/audios/3.mp3
@@ -58,6 +62,7 @@ flutter:
     - assets/audios/1.mp3
     - assets/audios/timeToBreak.mp3
     - assets/audios/nextLevel.mp3
+    - assets/icon/icon.png
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

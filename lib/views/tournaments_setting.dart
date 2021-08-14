@@ -2,59 +2,139 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:holdem_timer/models/default_tournament.dart';
+import 'package:intl/intl.dart';
 
 import '../globals.dart';
 import '../widgets.dart';
 import 'home.dart';
 
 class TournamentsSetting extends StatefulWidget {
-  final String title;
-  DefaultTournament defaultTournament;
+  String tournamentId;
+  final String purpose;
 
-  TournamentsSetting(this.title, this.defaultTournament);
+  TournamentsSetting({required this.tournamentId, required this.purpose});
+
   @override
   _TournamentsSettingState createState() => _TournamentsSettingState();
 }
 
 class _TournamentsSettingState extends State<TournamentsSetting> {
-  List<DefaultTournament> tournamentList = []; //List.filled(31, DefaultTournament());
+  List<DefaultTournament> tournamentList =
+      []; //List.filled(31, DefaultTournament());
   TextEditingController titleController = TextEditingController();
   late DefaultTournament defaultTournament;
+  List<TextEditingController> _sbControllers = [];
+  List<TextEditingController> _bbControllers = [];
+  List<TextEditingController> _anteControllers = [];
+  var title = '';
 
   @override
   void dispose() {
     super.dispose();
     titleController.dispose();
+    for (int i = 0; i < _sbControllers.length; i++) {
+      _sbControllers[i].dispose();
+      _bbControllers[i].dispose();
+      _anteControllers[i].dispose();
+    }
   }
 
   @override
   void initState() {
-    titleController.text = widget.title;
-    defaultTournament = widget.defaultTournament;
-
+    // titleController.text = widget.title;
+    // defaultTournament = widget.defaultTournament;
     super.initState();
-    tournamentList.add(DefaultTournament());
-    for (var i = 1; i <= defaultTournament.level!; i++) {
-      var level = i;
-      var sb = level * defaultTournament.sb!;
-      var bb = level * defaultTournament.bb!;
-      var ante = level * defaultTournament.ante!;
-      var runningTime = defaultTournament.runningTime;
-      var breakTime = 0;
 
-      if (i % 5 == 0) {
-        breakTime = defaultTournament.breakTime!;
-      } else if (i == 30) {
-        breakTime = defaultTournament.breakTime!;
+    /// 기존 토너먼트 수정하는 경우
+    if (widget.purpose == 'edit') {
+      FirebaseFirestore.instance
+          .collection('Tournaments')
+          .doc(widget.tournamentId)
+          .get()
+          .then((value) {
+        var doc = value.data();
+        setState(() {
+          titleController.text = doc!['title'];
+          title = doc['title'];
+        });
+      });
+      FirebaseFirestore.instance
+          .collection('Tournaments')
+          .doc(widget.tournamentId)
+          .collection('Levels')
+          .orderBy('level')
+          .get()
+          .then((value) {
+        QuerySnapshot ds = value;
+
+        // Map<String, dynamic> roomData = querySnapshot?.docs[index].data() as Map<String, dynamic>;
+        print('ds.size : ${ds.size}');
+        setState(() {
+          // tournamentList = List.filled(ds.size, DefaultTournament());
+          tournamentList.add(DefaultTournament());
+          _sbControllers.add(TextEditingController());
+          _bbControllers.add(TextEditingController());
+          _anteControllers.add(TextEditingController());
+
+          for (int i = 1; i <= ds.size; i++) {
+            Map<String, dynamic> item =
+                ds.docs[i-1].data() as Map<String, dynamic>;
+            tournamentList.add(DefaultTournament(
+                level: item['level'],
+                sb: item['sb'],
+                bb: item['bb'],
+                ante: item['ante'],
+                runningTime: item['runningTime'],
+                breakTime: item['breakTime']));
+
+            _sbControllers.add(TextEditingController());
+            _bbControllers.add(TextEditingController());
+            _anteControllers.add(TextEditingController());
+
+            _sbControllers[i].text = tournamentList[i].sb.toString();
+            _bbControllers[i].text = tournamentList[i].bb.toString();
+            _anteControllers[i].text = tournamentList[i].ante.toString();
+          }
+        });
+      });
+    } else {
+      tournamentList.add(DefaultTournament());
+      _sbControllers.add(TextEditingController());
+      _bbControllers.add(TextEditingController());
+      _anteControllers.add(TextEditingController());
+      // for (var i = 1; i <= defaultTournament.level!; i++) {
+      for (var i = 1; i <= 20; i++) {
+        var level = i;
+        // var sb = level * defaultTournament.sb!;
+        // var bb = level * defaultTournament.bb!;
+        // var ante = level * defaultTournament.ante!;
+        var sb = 1000;
+        var bb = 1000;
+        var ante = 1000;
+        var runningTime = 8; //defaultTournament.runningTime;
+        var breakTime = 0;
+
+        if (i % 5 == 0) {
+          breakTime = 5; //defaultTournament.breakTime!;
+        } else if (i == 20) {
+          breakTime = 10; //defaultTournament.breakTime!;
+        }
+        tournamentList.add(DefaultTournament(
+          level: level,
+          sb: sb,
+          bb: bb,
+          ante: ante,
+          runningTime: runningTime,
+          breakTime: breakTime,
+        ));
+        _sbControllers.add(TextEditingController());
+        _bbControllers.add(TextEditingController());
+        _anteControllers.add(TextEditingController());
+
+        _sbControllers[i].text = '1000';
+        _bbControllers[i].text = '2000';
+        _anteControllers[i].text = '3000';
       }
-      tournamentList.add(DefaultTournament(
-        level: level,
-        sb: sb,
-        bb: bb,
-        ante: ante,
-        runningTime: runningTime,
-        breakTime: breakTime,
-      ));
     }
   }
 
@@ -89,36 +169,85 @@ class _TournamentsSettingState extends State<TournamentsSetting> {
 
   saveData() async {
     var tournamentId = titleController.text;
+    print(tournamentId);
 
     for (int i = 1; i < tournamentList.length; i++) {
       Map<String, dynamic> tournamentLevelMap = {
         "level": i,
-        "sb": tournamentList[i].sb!,
-        "bb": tournamentList[i].bb!,
-        "ante": tournamentList[i].ante!,
+        "sb": int.parse(_sbControllers[i].text), //tournamentList[i].sb!,
+        "bb": int.parse(_bbControllers[i].text),
+        "ante": int.parse(_anteControllers[i].text),
         "runningTime": tournamentList[i].runningTime!,
         "breakTime": tournamentList[i].breakTime!,
       };
 
-      FirebaseFirestore.instance
-          .collection("Tournaments")
-          .doc(tournamentId)
-          .collection("Levels")
-          .add(tournamentLevelMap)
-          .then((_) {
-        /// 업로드 완료 후 title setting
+      if (widget.purpose == 'edit') {
+        /// 제목 변경 없는 경우
+        if (titleController.text == title) {
+          FirebaseFirestore.instance
+              .collection("Tournaments")
+              .doc(tournamentId)
+              .collection("Levels")
+              .doc(titleController.text)
+              .set(tournamentLevelMap).then((_) {
+            /// 업로드 완료 후 title setting
+            FirebaseFirestore.instance
+                .collection("Tournaments")
+                .doc(tournamentId)
+                .set({
+              'title': tournamentId,
+              'createdDt': DateTime.now()
+            }).catchError((e) {
+              print(e.toString());
+            });
+          });
+        } else {
+          /// 제목 변경된 경우
+          FirebaseFirestore.instance
+              .collection("Tournaments")
+              .doc(tournamentId)
+              .collection("Levels")
+              .doc(titleController.text)
+              .set(tournamentLevelMap).then((_) {
+            /// 업로드 완료 후 title setting
+            FirebaseFirestore.instance
+                .collection("Tournaments")
+                .doc(tournamentId)
+                .set({
+              'title': tournamentId,
+              'createdDt': DateTime.now()
+            }).then((_) {
+              /// 이전 토너먼트 제목 가진 문서 삭제
+              FirebaseFirestore.instance
+                  .collection("Tournaments")
+                  .doc(title).delete();
+            }).catchError((e) {
+              print(e.toString());
+            });
+          });
+        }
+      } else {
+        /// 신규 토너먼트 생성
         FirebaseFirestore.instance
             .collection("Tournaments")
             .doc(tournamentId)
-            .set({
-          'title': tournamentId,
-          'createdDt': DateTime.now()
+            .collection("Levels")
+            .add(tournamentLevelMap)
+            .then((_) {
+          /// 업로드 완료 후 title setting
+          FirebaseFirestore.instance
+              .collection("Tournaments")
+              .doc(tournamentId)
+              .set({
+            'title': tournamentId,
+            'createdDt': DateTime.now()
+          }).catchError((e) {
+            print(e.toString());
+          });
         }).catchError((e) {
           print(e.toString());
         });
-      }).catchError((e) {
-        print(e.toString());
-      });
+      }
     }
   }
 
@@ -251,307 +380,219 @@ class _TournamentsSettingState extends State<TournamentsSetting> {
                   if (index == 0) return Container();
                   return Dismissible(
                     key: Key(index.toString()),
-                    // direction: DismissDirection.startToEnd,
-                    // onDismissed: (direction) {
-                    //   setState(() => tournamentList.removeAt(index));
-                    // },
-                    child: InkWell(
-                      // onTap: () => setState(() => tournamentList.removeAt(index)),
-                      child: Container(
-                        decoration: BoxDecoration(
-                            border: Border.all(
-                          color: Colors.white10,
-                        )),
-                        height: MediaQuery.of(context).size.height * 0.1,
-                        child: Padding(
-                          padding: const EdgeInsets.all(5.0),
-                          child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                Container(
-                                    width:
-                                        MediaQuery.of(context).size.width * 0.15,
-                                    child: Row(children: [
-                                      headerText(
-                                          (index).toString(), smallTextSize),
-                                    ])),
-                                /// SB
-                                // plusMinusContainer(context, tournamentList[index].sb, smallTextSize, minusClickFunction(index), plusClickFunction(index)),
-                                Container(
-                                  width: MediaQuery.of(context).size.width * 0.13,
-                                  child: Row(
-                                    children: [
-                                      // InkWell(
-                                      //   onTap: () {
-                                      //     setState(() {
-                                      //       if(tournamentList[index]
-                                      //           .sb! > 0) {
-                                      //         tournamentList[index]
-                                      //             .sb =
-                                      //             tournamentList[index].sb! - 100;
-                                      //       }
-                                      //     });
-                                      //   },
-                                      //   child: Container(
-                                      //     child: Padding(
-                                      //       padding: const EdgeInsets.all(8.0),
-                                      //       child: Icon(
-                                      //         Icons.remove,
-                                      //         color: Colors.white,
-                                      //         size: smallTextSize,
-                                      //       ),
-                                      //     ),
-                                      //   ),
-                                      // ),
-                                      headerText(
-                                          tournamentList[index].sb.toString(),
-                                          smallTextSize),
-                                      InkWell(
-                                        onTap: () {
-                                          setState(() => tournamentList[index]
-                                                  .sb =
-                                              tournamentList[index].sb! + 100);
-                                        },
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Icon(
-                                            Icons.add,
-                                            color: Colors.white,
-                                            size: smallTextSize,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                SizedBox(
-                                    width:
-                                        MediaQuery.of(context).size.width * 0.03),
+                    child: Container(
+                      decoration: BoxDecoration(
+                          border: Border.all(
+                        color: Colors.white10,
+                      )),
+                      height: MediaQuery.of(context).size.height * 0.1,
+                      child: Padding(
+                        padding: const EdgeInsets.all(5.0),
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              Container(
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.15,
+                                  child: Row(children: [
+                                    headerText(
+                                        (index).toString(), smallTextSize),
+                                  ])),
 
-                                /// BB
-                                Container(
-                                  width: MediaQuery.of(context).size.width * 0.13,
-                                  child: Row(
-                                    children: [
-                                      InkWell(
-                                        onTap: () {
-                                          setState(() {
-                                            if(tournamentList[index]
-                                                .bb! > 0) {
+                              /// SB
+                              Container(
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.13,
+                                  child: TextFormField(
+                                      decoration: InputDecoration(
+                                          border: InputBorder.none),
+                                      textAlign: TextAlign.center,
+                                      controller: _sbControllers[index],
+                                      style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: smallTextSize,
+                                          fontWeight: FontWeight.bold))
+                                  // headerText(
+                                  //     tournamentList[index].sb.toString(),
+                                  //     smallTextSize),
+                                  ),
+                              SizedBox(
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.03),
+
+                              /// BB
+                              Container(
+                                width: MediaQuery.of(context).size.width * 0.13,
+                                child: TextFormField(
+                                    decoration: InputDecoration(
+                                        border: InputBorder.none),
+                                    textAlign: TextAlign.center,
+                                    controller: _bbControllers[index],
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: smallTextSize,
+                                        fontWeight: FontWeight.bold)),
+                                // headerText(
+                                //     tournamentList[index].bb.toString(),
+                                //     smallTextSize),
+                              ),
+                              SizedBox(
+                                width: MediaQuery.of(context).size.width * 0.03,
+                              ),
+
+                              /// Ante
+                              Container(
+                                width: MediaQuery.of(context).size.width * 0.13,
+                                child: TextFormField(
+                                    decoration: InputDecoration(
+                                        border: InputBorder.none),
+                                    textAlign: TextAlign.center,
+                                    controller: _anteControllers[index],
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: smallTextSize,
+                                        fontWeight: FontWeight.bold)),
+                                // headerText(
+                                //     tournamentList[index].ante.toString(),
+                                //     smallTextSize),
+                              ),
+                              SizedBox(
+                                width: MediaQuery.of(context).size.width * 0.03,
+                              ),
+
+                              /// running time
+                              Container(
+                                width: MediaQuery.of(context).size.width * 0.13,
+                                child: Row(
+                                  children: [
+                                    InkWell(
+                                      onTap: () {
+                                        if (tournamentList[index].runningTime! >
+                                            0) {
+                                          setState(() => tournamentList[index]
+                                                  .runningTime =
                                               tournamentList[index]
-                                                  .bb =
-                                                  tournamentList[index].bb! - 100;
-                                            }
-                                          });
-                                        },
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Icon(
-                                            Icons.remove,
-                                            color: Colors.white,
-                                            size: smallTextSize,
-                                          ),
-                                        ),
-                                      ),
-                                      headerText(
-                                          tournamentList[index].bb.toString(),
-                                          smallTextSize),
-                                      InkWell(
-                                        onTap: () {
-                                          setState(() => tournamentList[index]
-                                                  .bb =
-                                              tournamentList[index].bb! + 100);
-                                        },
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Icon(
-                                            Icons.add,
-                                            color: Colors.white,
-                                            size: smallTextSize,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: MediaQuery.of(context).size.width * 0.03,
-                                ),
-
-                                /// Ante
-                                Container(
-                                  width: MediaQuery.of(context).size.width * 0.13,
-                                  child: Row(
-                                    children: [
-                                      InkWell(
-                                        onTap: () {
-                                          setState(() {
-                                            if(tournamentList[index]
-                                                .ante! > 0) {
-                                              tournamentList[index]
-                                                  .ante =
-                                                  tournamentList[index].ante! - 100;
-                                            }
-                                          });
-                                        },
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Icon(
-                                            Icons.remove,
-                                            color: Colors.white,
-                                            size: smallTextSize,
-                                          ),
-                                        ),
-                                      ),
-                                      headerText(
-                                          tournamentList[index].ante.toString(),
-                                          smallTextSize),
-                                      InkWell(
-                                        onTap: () {
-                                          setState(() => tournamentList[index]
-                                                  .ante =
-                                              tournamentList[index].ante! + 100);
-                                        },
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Icon(
-                                            Icons.add,
-                                            color: Colors.white,
-                                            size: smallTextSize,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: MediaQuery.of(context).size.width * 0.03,
-                                ),
-
-                                /// running time
-                                Container(
-                                  width: MediaQuery.of(context).size.width * 0.13,
-                                  child: Row(
-                                    children: [
-                                      InkWell(
-                                        onTap: () {
-                                          if (tournamentList[index].runningTime! >
-                                              0) {
-                                            setState(() => tournamentList[index]
-                                                    .runningTime =
-                                                tournamentList[index]
-                                                        .runningTime! -
-                                                    1);
-                                          }
-                                        },
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Icon(
-                                            Icons.remove,
-                                            color: Colors.white,
-                                            size: smallTextSize,
-                                          ),
-                                        ),
-                                      ),
-                                      headerText(
-                                          tournamentList[index]
-                                              .runningTime
-                                              .toString(),
-                                          smallTextSize),
-                                      InkWell(
-                                        onTap: () {
-                                          setState(() {
-                                            tournamentList[index].runningTime =
-                                                tournamentList[index]
-                                                        .runningTime! +
-                                                    1;
-                                          });
-                                        },
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Icon(
-                                            Icons.add,
-                                            color: Colors.white,
-                                            size: smallTextSize,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: MediaQuery.of(context).size.width * 0.03,
-                                ),
-
-                                /// break time
-                                Container(
-                                  width: MediaQuery.of(context).size.width * 0.13,
-                                  child: Row(
-                                    children: [
-                                      InkWell(
-                                        onTap: () {
-                                          setState(() {
-                                            if (tournamentList[index].breakTime! >
-                                                0) {
-                                              tournamentList[index].breakTime =
-                                                  tournamentList[index]
-                                                          .breakTime! -
-                                                      1;
-                                            }
-                                          });
-                                        },
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Icon(
-                                            Icons.remove,
-                                            color: Colors.white,
-                                            size: smallTextSize,
-                                          ),
-                                        ),
-                                      ),
-                                      headerText(
-                                          tournamentList[index]
-                                              .breakTime
-                                              .toString(),
-                                          smallTextSize),
-                                      InkWell(
-                                        onTap: () {
-                                          setState(() => tournamentList[index]
-                                                  .breakTime =
-                                              tournamentList[index].breakTime! +
+                                                      .runningTime! -
                                                   1);
-                                        },
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: Icon(
-                                            Icons.add,
-                                            color: Colors.white,
-                                            size: smallTextSize,
-                                          ),
+                                        }
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Icon(
+                                          Icons.remove,
+                                          color: Colors.white,
+                                          size: smallTextSize,
                                         ),
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                    headerText(
+                                        tournamentList[index]
+                                            .runningTime
+                                            .toString(),
+                                        smallTextSize),
+                                    InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          tournamentList[index].runningTime =
+                                              tournamentList[index]
+                                                      .runningTime! +
+                                                  1;
+                                        });
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Icon(
+                                          Icons.add,
+                                          color: Colors.white,
+                                          size: smallTextSize,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                InkWell(
-                                  onTap: () {
-                                    setState(() {
-                                      DefaultTournament removeData = tournamentList.removeAt(index);
-                                      print('removeData.level : ${removeData.level}');
-                                      print('removeData.sb : ${removeData.sb}');
-                                      print('removeData.bb : ${removeData.bb}');
-                                      print('removeData.ante : ${removeData.ante}');
-                                      print('removeData.runningTime : ${removeData.runningTime}');
-                                      print('removeData.breakTime : ${removeData.breakTime}');
-                                    });
-                                  },
-                                  child: Container(
-                                      width:
-                                      MediaQuery.of(context).size.width * 0.05,
-                                      child: Icon(Icons.delete, color: Colors.redAccent.withOpacity(0.6), size: MediaQuery.of(context).size.width * 0.03,)),
+                              ),
+                              SizedBox(
+                                width: MediaQuery.of(context).size.width * 0.03,
+                              ),
+
+                              /// break time
+                              Container(
+                                width: MediaQuery.of(context).size.width * 0.13,
+                                child: Row(
+                                  children: [
+                                    InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          if (tournamentList[index].breakTime! >
+                                              0) {
+                                            tournamentList[index].breakTime =
+                                                tournamentList[index]
+                                                        .breakTime! -
+                                                    1;
+                                          }
+                                        });
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Icon(
+                                          Icons.remove,
+                                          color: Colors.white,
+                                          size: smallTextSize,
+                                        ),
+                                      ),
+                                    ),
+                                    headerText(
+                                        tournamentList[index]
+                                            .breakTime
+                                            .toString(),
+                                        smallTextSize),
+                                    InkWell(
+                                      onTap: () {
+                                        setState(() => tournamentList[index]
+                                                .breakTime =
+                                            tournamentList[index].breakTime! +
+                                                1);
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: Icon(
+                                          Icons.add,
+                                          color: Colors.white,
+                                          size: smallTextSize,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ]),
-                        ),
+                              ),
+                              InkWell(
+                                onTap: () {
+                                  setState(() {
+                                    DefaultTournament removeData =
+                                        tournamentList.removeAt(index);
+                                    print(
+                                        'removeData.level : ${removeData.level}');
+                                    print('removeData.sb : ${removeData.sb}');
+                                    print('removeData.bb : ${removeData.bb}');
+                                    print(
+                                        'removeData.ante : ${removeData.ante}');
+                                    print(
+                                        'removeData.runningTime : ${removeData.runningTime}');
+                                    print(
+                                        'removeData.breakTime : ${removeData.breakTime}');
+                                  });
+                                },
+                                child: Container(
+                                    width: MediaQuery.of(context).size.width *
+                                        0.05,
+                                    child: Icon(
+                                      Icons.delete,
+                                      color: Colors.redAccent.withOpacity(0.6),
+                                      size: MediaQuery.of(context).size.width *
+                                          0.03,
+                                    )),
+                              ),
+                            ]),
                       ),
                     ),
                   );
@@ -635,11 +676,14 @@ class _TournamentsSettingState extends State<TournamentsSetting> {
     setState(() {
       tournamentList.add(DefaultTournament(
           level: length,
-          sb: tournamentList[length-1].sb! + 100,
-          bb: tournamentList[length-1].bb! + 200,
-          ante: tournamentList[length-1].ante! + 200,
-          runningTime: tournamentList[length-1].runningTime!,
-          breakTime: tournamentList[length-1].breakTime!));
+          sb: tournamentList[length - 1].sb! + 100,
+          bb: tournamentList[length - 1].bb! + 200,
+          ante: tournamentList[length - 1].ante! + 200,
+          runningTime: tournamentList[length - 1].runningTime!,
+          breakTime: tournamentList[length - 1].breakTime!));
+      _sbControllers.add(TextEditingController());
+      _bbControllers.add(TextEditingController());
+      _anteControllers.add(TextEditingController());
     });
   }
 

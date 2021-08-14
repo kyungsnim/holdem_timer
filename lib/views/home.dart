@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:holdem_timer/views/play.dart';
+import 'package:holdem_timer/views/tournaments_setting.dart';
 
 import '../globals.dart';
 import '../widgets.dart';
@@ -163,12 +164,15 @@ class _HomeState extends State<Home> {
                     MediaQuery.of(context).size.height * 0.08,
                   )),
               SizedBox(width: 5),
-              // smallButton(
-              //   'COPY',
-              //   smallTextSize,
-              //   MediaQuery.of(context).size.height * 0.08,
-              // ),
-              // SizedBox(width: 5),
+              InkWell(
+                onTap: () => Get.to(() => TournamentsSetting(tournamentId: tournamentList[index], purpose: 'edit')),
+                child: smallButton(
+                  'EDIT',
+                  smallTextSize,
+                  MediaQuery.of(context).size.height * 0.08,
+                ),
+              ),
+              SizedBox(width: 5),
               InkWell(
                 onTap: () {
                   onPressDelete(tournamentList[index]);
@@ -203,7 +207,7 @@ class _HomeState extends State<Home> {
             ),
           ),
           InkWell(
-            onTap: () => Get.to(() => InputNewTournament()), //TournamentsSetting()),
+            onTap: () => Get.to(() => TournamentsSetting(purpose: "new", tournamentId: '',)), //InputNewTournament()), //
             child: primaryButton(
               'NEW TOURNAMENT',
               smallTextSize,

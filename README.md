@@ -11,10 +11,10 @@
 - 로고, 앱 아이콘 생성
 - 메인 색상 변경
 
-
 # Todo List
 - 수정 기능
 - Tournament setting시 SB/BB/ANTE 값 -/+ 아닌 직접 Editting 가능해야 함
+- 수정 기능 중... 1~20개의 레벨이 있었다면 20레벨에 aa 가 들어가는 오류 있음
 
 # SQFLITE 사용 방법
 1. Open DB

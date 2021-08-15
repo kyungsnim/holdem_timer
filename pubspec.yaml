@@ -62,6 +62,8 @@ flutter:
     - assets/audios/1.mp3
     - assets/audios/timeToBreak.mp3
     - assets/audios/nextLevel.mp3
+    - assets/audios/gameStart.mp3
+    - assets/audios/clock.mp3
     - assets/icon/icon.png
   #   - images/a_dot_ham.jpeg
 

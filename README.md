@@ -10,11 +10,10 @@
 - 딜리트 기능
 - 로고, 앱 아이콘 생성
 - 메인 색상 변경
+- 수정 기능 완료
+- 게임 시작시 Game start 음성 넣기
+- Next level, Break time 음성 넣기 (잘 나오고 있다고 생각했는데 안 나오고 있던게 맞았습니다)
+- Running Time 일괄 변경 가능하도록 변경
+- 5초 이내 남았을 때 유튜브 링크의 소리로 대체
 
 # Todo List
-- 수정 기능
-- Tournament setting시 SB/BB/ANTE 값 -/+ 아닌 직접 Editting 가능해야 함
-- 수정 기능 중... 1~20개의 레벨이 있었다면 20레벨에 aa 가 들어가는 오류 있음
-
-# SQFLITE 사용 방법
-1. Open DB

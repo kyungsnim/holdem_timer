@@ -39,6 +39,7 @@ class _PlayState extends State<Play> {
   var nextBb = 0;
   var nextAnte = 0;
   var maxLevel = 0;
+  var _isFirstStart = true;
   List<DefaultTournament>? tournamentList;
   late DefaultTournament currentTournament;
 
@@ -198,6 +199,12 @@ class _PlayState extends State<Play> {
 
   // 시작, 일시정지 버튼
   void _click() {
+    if (_isFirstStart) {
+      play('gameStart');
+      setState(() {
+        _isFirstStart = false;
+      });
+    }
     _isPlaying = !_isPlaying;
     if (_isPlaying) {
       setState(() {
@@ -237,15 +244,24 @@ class _PlayState extends State<Play> {
           } else {
             if(_currentLevel < maxLevel-1) {
               /// 분이 0이고 초도 0인 경우 다음 레벨로 변경
+              var breakTimeCheck = false;
+              if(currentTournament.breakTime != 0) {
+                breakTimeCheck = true;
+              }
               _currentLevel++;
               levelSetting();
               breakTimeSetting();
               _levelMinutes--;
               if (_timeToBreakMinutes != 0 &&
-                  _timeToBreakSeconds != 0 &&
-                  currentTournament.breakTime! == 0) {
+                  !breakTimeCheck) {
+              // print('_timeToBreakMinutes: $_timeToBreakMinutes');
+              // print('_timeToBreakSeconds: $_timeToBreakSeconds');
+              // print('currentTournament.breakTime: ${currentTournament.breakTime}');
                 /// 브레이크타임이 아닐 때만 NEXT LEVEL 소리 내보내
                 play('nextLevel');
+              }
+              if(breakTimeCheck) {
+                play('timeToBreak');
               }
             } else {
               _click();
@@ -271,9 +287,12 @@ class _PlayState extends State<Play> {
         }
         _timeToBreakSeconds--;
 
-        if (_levelMinutes == 0 && _levelSeconds <= 5 && _levelSeconds > 0) {
-          /// 5초 남을 때부터 음성 표시하기
-          play(_levelSeconds);
+        // if (_levelMinutes == 0 && _levelSeconds <= 5 && _levelSeconds > 0) {
+        //   /// 5초 남을 때부터 음성 표시하기
+        //   play(_levelSeconds);
+        // }
+        if (_levelMinutes == 0 && _levelSeconds == 4) {
+          play('clock');
         }
       });
     });
@@ -292,6 +311,7 @@ class _PlayState extends State<Play> {
     }
 
     setState(() {
+      _isFirstStart = true;
       startOrPause = 'START';
       _isPlaying = false;
       _timer?.cancel();

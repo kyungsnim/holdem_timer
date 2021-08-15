@@ -100,25 +100,48 @@ class _HomeState extends State<Home> {
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.15,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-              width: titleTextSize * 1.5,
-              height: titleTextSize * 1.5,
-              child: Image(
-                image: AssetImage('assets/images/logo.png'),
-              )),
-          SizedBox(
-            width: mediumTextSize,
-          ),
-          Text('T O U R N A M E N T S',
-              style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: titleTextSize,
-                  color: mainColor))
-        ],
-      ),
+      child:
+      // Stack(children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+                width: titleTextSize * 1.5,
+                height: titleTextSize * 1.5,
+                child: Image(
+                  image: AssetImage('assets/images/logo.png'),
+                )),
+            SizedBox(
+              width: mediumTextSize,
+            ),
+            Text('T O U R N A M E N T S',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: titleTextSize,
+                    color: mainColor))
+          ],
+        ),
+        // Positioned(
+        //     top: 10,
+        //     right: 10,
+        //     child: InkWell(
+        //       onTap: () {
+        //         loadOrSaveData();
+        //         Navigator.pushAndRemoveUntil(
+        //             context,
+        //             MaterialPageRoute(builder: (context) => Home()),
+        //             (route) => false);
+        //       },
+        //       child: Container(
+        //         child: Icon(
+        //           Icons.refresh,
+        //           color: Colors.white,
+        //           size: titleTextSize,
+        //         ),
+        //       ),
+        //     ))
+      // ]
+      // ),
     );
   }
 
@@ -141,12 +164,13 @@ class _HomeState extends State<Home> {
                 border: Border.all(
               color: Colors.white10,
             )),
-            child: Row(children: [
+            child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
               Flexible(
-                flex: 2,
+                flex: 3,
                 child: Padding(
                   padding: const EdgeInsets.all(25),
                   child: Container(
+                    alignment: Alignment.centerLeft,
                     child: Text(tournamentList[index],
                         style: TextStyle(
                           color: Colors.white,
@@ -156,16 +180,20 @@ class _HomeState extends State<Home> {
                 ),
               ),
               Spacer(),
-              InkWell(
-                  onTap: () => Get.to(() => Play(tournamentList[index])),
-                  child: smallButton(
-                    'PLAY',
-                    smallTextSize,
-                    MediaQuery.of(context).size.height * 0.08,
-                  )),
+              Flexible(
+                flex: 1,
+                child: InkWell(
+                    onTap: () => Get.to(() => Play(tournamentList[index])),
+                    child: smallButton(
+                      'PLAY',
+                      smallTextSize,
+                      MediaQuery.of(context).size.height * 0.08,
+                    )),
+              ),
               SizedBox(width: 5),
               InkWell(
-                onTap: () => Get.to(() => TournamentsSetting(tournamentId: tournamentList[index], purpose: 'edit')),
+                onTap: () => Get.to(() => TournamentsSetting(
+                    tournamentId: tournamentList[index], purpose: 'edit')),
                 child: smallButton(
                   'EDIT',
                   smallTextSize,
@@ -173,16 +201,20 @@ class _HomeState extends State<Home> {
                 ),
               ),
               SizedBox(width: 5),
-              InkWell(
-                onTap: () {
-                  onPressDelete(tournamentList[index]);
-                },
-                child: smallButton(
-                  'DELETE',
-                  smallTextSize,
-                  MediaQuery.of(context).size.height * 0.08,
+              Flexible(
+                flex: 1,
+                child: InkWell(
+                  onTap: () {
+                    onPressDelete(tournamentList[index]);
+                  },
+                  child: smallButton(
+                    'DELETE',
+                    smallTextSize,
+                    MediaQuery.of(context).size.height * 0.08,
+                  ),
                 ),
               ),
+              Spacer(),
             ]),
           );
         },
@@ -207,7 +239,11 @@ class _HomeState extends State<Home> {
             ),
           ),
           InkWell(
-            onTap: () => Get.to(() => TournamentsSetting(purpose: "new", tournamentId: '',)), //InputNewTournament()), //
+            onTap: () => Get.to(() => TournamentsSetting(
+                  purpose: "new",
+                  tournamentId: '',
+                )),
+            //InputNewTournament()), //
             child: primaryButton(
               'NEW TOURNAMENT',
               smallTextSize,
@@ -227,7 +263,8 @@ class _HomeState extends State<Home> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.black,
-        title: Text("앱을 종료하시겠습니까?", style: TextStyle(fontSize: smallTextSize, color: mainColor)),
+        title: Text("앱을 종료하시겠습니까?",
+            style: TextStyle(fontSize: smallTextSize, color: mainColor)),
         actions: <Widget>[
           TextButton(
             child: Text(
@@ -258,7 +295,8 @@ class _HomeState extends State<Home> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Colors.black,
-        title: Text("삭제하시겠습니까?", style: TextStyle(fontSize: smallTextSize, color: mainColor)),
+        title: Text("삭제하시겠습니까?",
+            style: TextStyle(fontSize: smallTextSize, color: mainColor)),
         actions: <Widget>[
           TextButton(
             child: Text(
